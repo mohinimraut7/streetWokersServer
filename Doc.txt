@@ -1,0 +1,154 @@
+SVMS BACKEND — Street Vendors Management System (VVCMC)
+==========================================================
+
+REFERENCE
+---------
+हा project तुझ्या jansanwadserver project च्या structure आणि coding convention वर आधारित बनवला आहे
+(config/, controllers/, middlewares/, models/, routes/, utils/, uploads/, index.js — तीच layout).
+
+FOLDER STRUCTURE
+----------------
+svms-backend/
+  config/
+    db.js              → MongoDB connect
+    cloudinary.js       → Cloudinary config (file/photo upload)
+  controllers/
+    userController.js               → Auth (OTP + staff login), user CRUD
+    vendorApplicationController.js  → Full application workflow
+    grievanceController.js          → Vendor/Citizen complaints
+  middlewares/
+    auth.js                          → JWT protect, allowRoles, enforceWard
+    uploadVendorApplication.js       → Multer+Cloudinary (docs/photos/survey photos)
+    uploadGrievance.js               → Multer+Cloudinary (grievance docs)
+  models/
+    User.js              → roles: vendor, citizen, counter_officer, survey_officer,
+                            concern_officer, super_admin (+ ward field)
+    VendorApplication.js  → core workflow model (survey, concernOfficerAction, payment, certificate)
+    Grievance.js          → vendor/citizen complaints, ward-wise, replies thread
+  routes/
+    userRoutes.js
+    vendorApplicationRoutes.js
+    grievanceRoutes.js
+  utils/
+    constants.js          → WARDS (A-I), ROLES, APPLICATION_STATUS, GRIEVANCE_STATUS
+    generateJwt.js
+    generateNumbers.js    → applicationNo / grievanceNo / certificateNo generators
+    sendWhatsAppOtp.js    → same WhatsApp API as reference project
+    qrGenerator.js        → QR code for Smart Card (uses `qrcode` package)
+    otpStore.js           → in-memory OTP verify (5 min expiry)
+  uploads/                → local placeholder (actual files go to Cloudinary)
+  index.js
+  package.json
+  .env.example
+
+
+ROLES & ACCESS (जसं तू सांगितलंस)
+----------------------------------
+- vendor              → स्वतःचा application भरतो / track करतो / grievance टाकतो
+- citizen             → फक्त grievance टाकू शकतो
+- counter_officer     → EDIT ACCESS. vendor च्या वतीने application भरतो, edit करतो,
+                        survey officer कडे forward करतो, send back करतो. Ward-wise.
+- survey_officer      → field verification: geo location, survey photos, comments.
+                        approve केल्यास पुढे concern officer कडे, नाहीतर counter officer कडे परत. Ward-wise.
+- concern_officer     → Ward-wise A.M.C. (Ward A ते Ward I). EDIT ACCESS.
+                        final approve/reject/send back. चूक दिसल्यास counter officer कडे direct पाठवू शकतो.
+- super_admin         → सर्व काही बघू/करू शकतो, कुठलाही ward-restriction नाही.
+
+
+APPLICATION WORKFLOW (status flow)
+-----------------------------------
+Draft
+  → Submitted (vendor स्वतः submit करतो, किंवा counter officer थेट submit status मध्ये तयार करतो)
+  → Sent Back to Vendor (counter officer, corrections साठी) → परत Submitted
+  → Forwarded to Survey Officer (counter officer)
+  → Survey Officer: recommendation "Approve" → Forwarded to Concern Officer
+                    recommendation "Send Back" → Sent Back to Counter Officer
+  → Concern Officer (ward AMC): decision "Approved" → Payment Pending
+                                 decision "Sent Back" → Sent Back to Counter Officer
+                                 decision "Rejected" → Rejected
+  → Payment Pending → Payment Done (payment record केल्यावर लगेच)
+  → Certificate Issued (QR code auto-generate, 1 वर्ष validity)
+
+प्रत्येक status change `statusHistory[]` array मध्ये track होतो (कोणी, केव्हा, काय remark).
+
+ZONE / WARD CHANGE
+-------------------
+Counter Officer आणि Survey Officer दोघेही कोणत्याही टप्प्यावर application चा `ward` update करू शकतात
+(forwardToSurveyOfficer आणि updateSurvey दोन्ही API मध्ये `ward` पाठवता येतो).
+
+
+GRIEVANCE MODULE
+-----------------
+- Vendor आणि Citizen दोघेही स्वतंत्रपणे complaint (grievance) टाकू शकतात (`complainantType`).
+- Ward-wise assign होते counter_officer / concern_officer कडे.
+- Reply thread — जसं InwardApplication.replies मध्ये होतं तसंच.
+
+
+PAYMENT → QR SMART CARD
+-------------------------
+- Concern Officer approve करताच status "Payment Pending" होतो.
+- `/api/applications/payment/:applicationNo` वर payment record केल्यावर:
+  1. status → "Payment Done" → लगेच "Certificate Issued"
+  2. certificateNo auto-generate (VVCMC-CERT-YYYY-NNNN)
+  3. QR code generate होतो (`qrcode` package) — QR मध्ये verification URL असतो
+     (${PORTAL_LINK}/verify/{applicationNo})
+  4. validTill = issueDate + 1 वर्ष
+
+PUBLIC QR VERIFICATION (No login)
+-----------------------------------
+GET /api/applications/public/verify/:applicationNo
+→ QR स्कॅन केल्यावर हे endpoint उघडतं, login लागत नाही (जसं तुझ्या frontend च्या QRVerification.jsx चं आहे).
+
+
+AUTH
+----
+- Vendor/Citizen → Mobile + OTP (WhatsApp) → /sendOtp → /verifyOtpLogin
+  (पहिल्यांदा login केल्यास auto-register होतो, role="vendor")
+- Staff (Counter/Survey/Concern Officer, Super Admin) → username + password → /login
+  (bcrypt hashed password, JWT token — reference project prmane पण जास्त secure)
+
+
+UPDATE — WARD-WISE STRICT ENFORCEMENT (latest change)
+--------------------------------------------------------
+आधीच्या version मध्ये ward-wise access फक्त Concern Officer च्या decision API मध्ये check होत होता.
+Counter Officer आणि Survey Officer साठी ward हा client (frontend/query param) कडून पाठवला जायचा —
+म्हणजे कोणीही दुसऱ्या ward चा data query param बदलून बघू शकत होता. हे fix केलं आहे:
+
+नवीन `utils/wardAccess.js` — `checkWardAccess(user, targetWard)` हे common helper आहे, जे
+counter_officer / survey_officer / concern_officer या तिघांसाठीही सारखेच लागू होते:
+  - user कडे ward assign नसेल तर → 403
+  - user चा ward आणि application/grievance चा ward match नसेल तर → 403 "Access denied"
+  - super_admin ला कुठलाच restriction नाही
+  - vendor/citizen ला हे लागूच होत नाही (ते फक्त स्वतःचा data बघतात)
+
+कुठे कुठे लावलं:
+  - createApplication      → Counter Officer create करताना, त्याचा स्वतःचा ward च वापरला जातो
+                              (client ने वेगळा ward पाठवला तरी ignore होतो)
+  - updateApplication      → Counter Officer edit फक्त स्वतःच्या ward च्या application वर
+  - sendBackToVendor       → तेच
+  - forwardToSurveyOfficer → तेच (ward बदलल्यास statusHistory मध्ये "Zone changed" नोंद होते)
+  - updateSurvey           → Survey Officer फक्त स्वतःच्या ward च्या application वर
+  - concernOfficerDecision → आधीपासून होतंच, आता shared helper वापरतो (consistent)
+  - getAllApplications     → आता ward/role/userId हे JWT (req.user) वरून घेतले जातात,
+                              query param वरून घेतले जात नाहीत (security fix — client manipulate करू शकत नाही)
+  - grievanceController    → getAllGrievances, assignGrievance, replyGrievance यांनाही
+                              तोच ward-check लागू केला (counter_officer / concern_officer साठी)
+
+टीप (frontend reference बद्दल): अपलोड केलेल्या frontend च्या dummy data (authService.js) मध्ये
+ward format "Ward 1..15" आणि "Zone A..E" असा वेगळा आहे — पण तू स्पष्ट सांगितल्याप्रमाणे backend
+च्या `utils/constants.js` मध्ये `WARDS` अजूनही "Ward A" ते "Ward I" (9 wards) असंच ठेवलं आहे.
+जर पुढे frontend च्या dummy wards शी match करायचं असेल (उदा. संख्यात्मक wards), तर फक्त
+`utils/constants.js` मधली `WARDS` array बदलून दे — बाकी कुठेही code change लागणार नाही
+(संपूर्ण codebase त्याच constant वर आधारित आहे).
+
+
+NEXT STEPS
+----------
+1. .env.example → .env करून तुझे Mongo/Cloudinary/WhatsApp credentials भर.
+2. `npm install`
+3. `npm run dev`
+4. Postman/Frontend मधून test कर.
+5. citizen complain साठी वेगळा role असल्याने frontend मध्ये login screen मध्ये
+   "vendor" आणि "citizen" दोन्हीसाठी OTP flow same ठेव, फक्त role वेगळा असेल तर
+   auto-register वेळी citizen साठी वेगळा signup flow लागेल (सध्या auto-register vendor म्हणून होतो —
+   गरज असल्यास citizen signup साठी वेगळा endpoint सांग, तो पण जोडून देतो).
