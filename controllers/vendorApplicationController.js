@@ -8326,25 +8326,10 @@ exports.emergencyIssueCertificate = async (req, res) => {
       if (!wardCheck.ok) return res.status(403).json({ success: false, message: wardCheck.message });
     }
 
-    // ── Only makes sense once the vendor has actually submitted — same starting points as
-    //    the normal "Forward to Survey Officer" action, plus already-in-progress stages so
-    //    it can rescue a stuck application at any point before the certificate exists. ──
-    const allowedFrom = [
-      "Submitted",
-      "Sent Back to Counter Officer",
-      "Forwarded to Survey Officer",
-      "Survey Approved",
-      "Forwarded to A.M.C.",
-      "A.M.C. Approved",
-      "Payment Pending",
-    ];
-    if (!allowedFrom.includes(application.status)) {
-      return res.status(400).json({
-        success: false,
-        message: `Emergency issue not available from status "${application.status}" ❌`,
-      });
-    }
+  
 
+// ── Any status is allowed EXCEPT one that's already got a certificate — this can now
+    //    rescue an application from literally anywhere in the pipeline, including Draft. ──
     if (application.status === "Certificate Issued") {
       return res.status(400).json({ success: false, message: "Certificate already issued for this application ❌" });
     }
