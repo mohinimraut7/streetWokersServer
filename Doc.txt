@@ -121,6 +121,8 @@ counter_officer / survey_officer / concern_officer या तिघांसा�
   - super_admin ला कुठलाच restriction नाही
   - vendor/citizen ला हे लागूच होत नाही (ते फक्त स्वतःचा data बघतात)
 
+  
+
 कुठे कुठे लावलं:
   - createApplication      → Counter Officer create करताना, त्याचा स्वतःचा ward च वापरला जातो
                               (client ने वेगळा ward पाठवला तरी ignore होतो)
