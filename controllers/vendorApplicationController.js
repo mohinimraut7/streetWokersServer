@@ -555,6 +555,30 @@ exports.getApplicationByNo = async (req, res) => {
 };
 
 // ═══════════════════════════════════════════════════════
+//  DELETE APPLICATION — Counter Officer (own ward) / Super Admin (any ward)
+// ═══════════════════════════════════════════════════════
+exports.deleteVendorApplication = async (req, res) => {
+  try {
+    const { applicationNo } = req.params;
+    const application = await VendorApplication.findOne({ applicationNo });
+    if (!application) return res.status(404).json({ success: false, message: "Application not found ❌" });
+
+    if (req.user.role === "counter_officer") {
+      const wardCheck = checkWardAccess(req.user, application.ward);
+      if (!wardCheck.ok) return res.status(403).json({ success: false, message: wardCheck.message });
+    }
+
+    await VendorApplication.deleteOne({ applicationNo });
+
+    return res.status(200).json({ success: true, message: "Application deleted ✅" });
+  } catch (error) {
+    console.error("Delete Application Error:", error);
+    return res.status(500).json({ success: false, message: "Server Error ❌", error: error.message });
+  }
+};
+
+
+// ═══════════════════════════════════════════════════════
 //  11) VERIFY CERTIFICATE — PUBLIC route, QR scan केल्यावर उघडते (login आवश्यक नाही)
 // ═══════════════════════════════════════════════════════
 exports.verifyCertificate = async (req, res) => {
