@@ -1181,6 +1181,7 @@ const {
   emergencyIssueCertificate,
 } = require("../controllers/vendorApplicationController");
 
+
 const uploadVendorApplication = require("../middlewares/uploadVendorApplication");
 const { protect, allowRoles } = require("../middlewares/auth");
 
