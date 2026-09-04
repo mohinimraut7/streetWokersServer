@@ -1,2 +1,8 @@
 node_modules/
 
+reports/
+
+scripts/extractMissingMobileVendors.js
+scripts/findMissingVendors.js
+
+Doc.txt

@@ -155,3 +155,17 @@ NEXT STEPS
    "vendor" आणि "citizen" दोन्हीसाठी OTP flow same ठेव, फक्त role वेगळा असेल तर
    auto-register वेळी citizen साठी वेगळा signup flow लागेल (सध्या auto-register vendor म्हणून होतो —
    गरज असल्यास citizen signup साठी वेगळा endpoint सांग, तो पण जोडून देतो).
+======================================
+
+Path: backend/scripts/findMissingVendors.js (naveen file, backend cha scripts/ folder madhe taka)
+
+Run: node scripts/findMissingVendors.js "A.xlsx" "Ward A"
+
+Baकीचे 2 scripts (importVendorsWithReport.js, auditBulkImportGaps.js) pan havет asel tar sanga, deto.\
+
+ "exceljs" package not found. Run: npm install exceljs
+
+ npm install exceljs
+
+
+ node scripts/findMissingVendors.js "C:\mohini\Harshal_Sir\A.xlsx" "Ward A"
