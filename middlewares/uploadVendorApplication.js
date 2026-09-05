@@ -180,7 +180,7 @@ const fileFilter = (req, file, cb) => {
 // safety cap (e.g. a very large PDF, or a client that bypasses the browser-side check). ──
 const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
 
-// vendor sathi frontend मध्ये (Step4Documents.jsx) 5 वेगळे named uploads आहेत,
+// vendor sathi frontend मध्ये (Step4Documents.jsx) 5 वेगळे named uploads
 // त्यामुळे इथे प्रत्येक document type साठी वेगळं field ठेवलं आहे (generic "documents" array ऐवजी)
 // surveyPhotos → survey officer upload करतो (multiple)
 const uploadFields = upload.fields([
