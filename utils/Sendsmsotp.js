@@ -128,6 +128,7 @@ const TEMPLATES = {
       `Dear Citizen ${otp} is OTP for ${otp} login for citizen registration.${otp} SAAVI INFINET`,
   },
 };
+// testing sathi
 
 // purpose: "login" | "registration"
 const sendSmsOtp = async (mobile, otp, purpose = "login") => {
