@@ -2769,7 +2769,12 @@ exports.verifyCertificate = async (req, res) => {
   try {
     const { applicationNo } = req.params;
     const application = await VendorApplication.findOne({ applicationNo }).select(
-      "applicationNo vendorId personal.fullName business address ward vendingLocation certificate status documents.photo"
+
+      // "applicationNo vendorId personal.fullName business address ward vendingLocation certificate status documents.photo"
+
+            // "applicationNo vendorId personal.fullName business address ward vendingLocation certificate status documents.photo"
+      "applicationNo vendorId personal.fullName personal.gender personal.mobile personal.dob business address ward vendingLocation certificate status documents.photo"
+
     );
 
     if (!application || application.status !== "Certificate Issued") {
