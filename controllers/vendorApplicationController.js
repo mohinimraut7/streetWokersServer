@@ -3164,7 +3164,49 @@ exports.bulkGenerateIdCards = async (req, res) => {
       skipped,
     });
   } catch (error) {
+//     console.error("Bulk Generate ID Cards Error:", error);
+//     return res.status(500).json({ success: false, message: "Server Error ❌", error: error.message });
+//   }
+// };
+
     console.error("Bulk Generate ID Cards Error:", error);
+    return res.status(500).json({ success: false, message: "Server Error ❌", error: error.message });
+  }
+};
+
+// ═══════════════════════════════════════════════════════
+//  ID CARD PHOTO UPDATE — fakta Super Admin, fakta approved vendors
+//  Fakta documents.photo badalto — baki data as it is. Juna photo URL history madhe save hoto.
+// ═══════════════════════════════════════════════════════
+exports.updateIdCardPhoto = async (req, res) => {
+  try {
+    const { applicationNo } = req.params;
+    const application = await VendorApplication.findOne({ applicationNo });
+    if (!application) return res.status(404).json({ success: false, message: "Application not found ❌" });
+
+    const allowedStatuses = ["A.M.C. Approved", "Payment Pending", "Payment Done", "Certificate Issued"];
+    if (!allowedStatuses.includes(application.status)) {
+      return res.status(400).json({ success: false, message: "Photo can be updated only for approved vendors ❌" });
+    }
+
+    const file = req.files?.photo?.[0];
+    if (!file) return res.status(400).json({ success: false, message: "Please select a photo ❌" });
+
+    const oldPhoto = application.documents?.photo || "";
+    application.documents = application.documents || {};
+    application.documents.photo = file.path;
+
+    pushHistory(
+      application,
+      application.status,
+      req.user,
+      `ID card photo updated by ${req.user?.role || ""} (old photo: ${oldPhoto || "—"})`
+    );
+    await application.save();
+
+    return res.status(200).json({ success: true, message: "Photo updated successfully ✅", data: application });
+  } catch (error) {
+    console.error("Update ID Card Photo Error:", error);
     return res.status(500).json({ success: false, message: "Server Error ❌", error: error.message });
   }
 };

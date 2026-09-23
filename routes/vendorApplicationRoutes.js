@@ -115,7 +115,12 @@ const {
   emergencyIssueCertificate,
   deleteVendorApplication,
   generateIdCardByAmc,
+//   bulkGenerateIdCards,
+// } = require("../controllers/vendorApplicationController");
+
+
   bulkGenerateIdCards,
+  updateIdCardPhoto, // ID card photo update — Super Admin
 } = require("../controllers/vendorApplicationController");
 
 
@@ -208,6 +213,21 @@ router.delete("/:applicationNo", protect, allowRoles("counter_officer", "super_a
 router.get("/:applicationNo", protect, getApplicationByNo);
 
 // ── PUBLIC — QR scan verification, no login needed ──
+// router.get("/public/verify/:applicationNo", verifyCertificate);
+
+// module.exports = router;
+
+
+
 router.get("/public/verify/:applicationNo", verifyCertificate);
+
+// ── ID card photo update — fakta Super Admin, fakta approved vendors ──
+router.patch(
+  "/updatePhoto/:applicationNo",
+  protect,
+  allowRoles("super_admin"),
+  uploadVendorApplication,
+  updateIdCardPhoto
+);
 
 module.exports = router;
