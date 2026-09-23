@@ -2595,7 +2595,9 @@ exports.recordPayment = async (req, res) => {
     pushHistory(application, "Payment Done", req.user, `Payment received: ${transactionId || ""}`);
 
     // ── Payment झाल्यावर लगेच QR Smart Card generate करा ──
-    const certificateNo = await generateCertificateNo();
+    // const certificateNo = await generateCertificateNo();
+
+    const certificateNo = await generateCertificateNo(application._id);
     const { verifyUrl, qrDataUrl } = await generateQrDataUrl(application.applicationNo);
 
     const issueDate = new Date();

@@ -38,11 +38,22 @@ exports.generateGrievanceNo = async () => {
 };
 
 // ── Certificate Number ──  e.g. VVCMC-CERT-2026-0001
-exports.generateCertificateNo = async () => {
+// exports.generateCertificateNo = async () => {
+//   const year = new Date().getFullYear();
+//   const count = await VendorApplication.countDocuments({
+//     "certificate.certificateNo": { $ne: "" },
+//   });
+//   const serial = String(count + 1).padStart(4, "0");
+//   return `VVCMC-CERT-${year}-${serial}`;
+// };
+
+
+exports.generateCertificateNo = async (applicationId) => {
+  if (!applicationId) throw new Error("generateCertificateNo: applicationId required");
   const year = new Date().getFullYear();
-  const count = await VendorApplication.countDocuments({
-    "certificate.certificateNo": { $ne: "" },
+  const position = await VendorApplication.countDocuments({
+    _id: { $lte: applicationId },
   });
-  const serial = String(count + 1).padStart(4, "0");
-  return `VVCMC-CERT-${year}-${serial}`;
+  const serial = String(position).padStart(5, "0");
+  return `VVCMC-SV-${year}-${serial}`;
 };
