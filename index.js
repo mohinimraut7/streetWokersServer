@@ -7,8 +7,8 @@ const userRoutes = require("./routes/userRoutes");
 const vendorApplicationRoutes = require("./routes/vendorApplicationRoutes");
 const grievanceRoutes = require("./routes/grievanceRoutes");
 
-const geofenceRoutes = require("./routes/geofenceRoutes");
-const seedDefaultGeofence = require("./seeders/seedGeofence");
+// const geofenceRoutes = require("./routes/geofenceRoutes");
+// const seedDefaultGeofence = require("./seeders/seedGeofence");
 
 const app = express();
 
@@ -23,14 +23,14 @@ app.use(express.urlencoded({ extended: true,limit: "25mb" }));
 // ── DB Connect ──
 connectDB().then(() => {
   // ── Seed default "No Feriwala Area" geofence (idempotent — safe on every restart) ──
-  seedDefaultGeofence();
+  // seedDefaultGeofence();
 });
 
 // ── Routes ──
 app.use("/api/users", userRoutes);
 app.use("/api/applications", vendorApplicationRoutes);
 app.use("/api/grievances", grievanceRoutes);
-app.use("/api/geofences", geofenceRoutes); // NEW — No Feriwala Area Geofencing
+// app.use("/api/geofences", geofenceRoutes); // NEW — No Feriwala Area Geofencing
 // ── Health check ──
 app.get("/", (req, res) => {
   res.send("✅ SVMS Backend (Street Vendors Management System - VVCMC) is running");

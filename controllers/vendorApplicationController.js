@@ -10,7 +10,7 @@ const generateQrDataUrl = require("../utils/qrGenerator");
 const { checkWardAccess } = require("../utils/wardAccess");
 const { WARDS } = require("../utils/constants");
 // ── No Feriwala Area Geofencing (NEW) ──
-const { findRestrictedAreaForPoint } = require("../services/geofenceService");
+// const { findRestrictedAreaForPoint } = require("../services/geofenceService");
 
 // ── Finds the vendor's real User account by mobile number, creating one if it doesn't exist yet
 //    (e.g. when a Counter Officer registers a vendor who has never logged in themselves).
